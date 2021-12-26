@@ -1,0 +1,377 @@
+openapi: 3.0.0
+info:
+  title: User Service
+  version: 0.0.1
+  description: |
+    User Service is a REST HTTP API for managing user data. It exposes REST endpoint for
+    * Storing User Personal Information
+    * Retrieving User Personal Information
+    * Updating User Personal Information
+    * Retrieving Users
+    * Retrieving Users by Organization
+
+    # Security
+
+    ## Authentication
+
+    Access to the API is controlled by Oauth2 Client Credentials Grant
+    The client needs to request an access token from the oauth2 server by providing a client identifier and secret.
+    This access token must be used for all the requests to the User Service
+
+    # Responses
+
+    ## HTTP Response Codes
+    | Status Code | Usage                                                       |
+    |-------------|-------------------------------------------------------------|
+    | 200         | The request completed successfully                          |
+    | 201         | A new resource has been created                             |
+    | 400         | Malformed request                                           |
+    | 401         | Missing access token                                        |
+    | 403         | The client does not have permission to access this resource |
+    | 404         | Resource not found                                          |
+    | 405         | Method not supported                                        |
+    | 500         | Internal server error                                       |
+    | 503         | Service unvailable                                          |
+
+    ## Errors
+    whenever an error occured within the platform, an error response that describes the problem will be returned
+
+    | Field Name        | Field Description     |
+    |-------------------|-----------------------|
+    | Status            | "fail" or "error"     |
+    | StatusCode        | A business error code |
+    | StatusDescription | Error description     |
+
+    ## Error codes
+
+    | Error Code | Error Description                                |
+    |------------|--------------------------------------------------|
+    | 4001       | Can't obtain the list of users                   |
+    | 4010       | Can't create the user                            |
+    | 4020       | User not found                                   |
+    | 4030       | Can't obtain user data                           |
+    | 4040       | Unable to update user informatiom                |
+    | 4000       | Invalid Request                                  |
+    | 4050       | System Error                                     |
+
+    # Changelog
+
+    ## 2019-11-05
+    * Created .....
+
+    # Useful links
+  termsOfService: 'http://swagger.io/terms/'
+  x-logo:
+    url: '/static/img/kibaro_logo.jpeg'
+    backgroundColor: '#FFFFFF'
+    altText: KIBARO Logo
+servers:
+  - url: 'https://kibaro-user-svc-fjhmnd5asa-ew.a.run.app'
+    description: Testing Server
+  - url: 'http://localhost:8085/'
+    description: Local Server
+tags:
+  - name: Users
+    description: Users are used to handle operations on user data
+paths:
+  /v1/users:
+    get:
+      summary: Obtain a list of users
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Successfully obtained the list of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/ResponseStatus'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/UsersWithId'
+
+        '500':
+          description: Error when obtaining the list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: fail
+                statusCode: 4001
+                statusDescription: Error when obtaining the list of users
+
+    post:
+      summary: Create a User
+      tags:
+        - Users
+      requestBody:
+        description: The user specification
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Successfully created a user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/ResponseStatus'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/UserWithId'
+        '500':
+          description: Error when creating the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: fail
+                statusCode: 4010
+                statusDescription: Error when creating the user
+  /v1/users/{userId}:
+    get:
+      summary: Fetch user data
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 9fc1623161119d4ec9aee036
+      responses:
+        '200':
+          description: Successfully fetched a user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/ResponseStatus'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/UserWithId'
+        '404':
+          description: user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: fail
+                statusCode: 4020
+                statusDescription: user not found
+        '500':
+          description: Error when fetching the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: fail
+                statusCode: 4021
+                statusDescription: Error when fetching the user
+    patch:
+      summary: Update a User
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 6784bbea-ea94-426e-bb64-594eeee6cb03
+      requestBody:
+        description: The user specification
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Successfully updated a user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/ResponseStatus'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/UserWithId'
+        '500':
+          description: Error when updating the user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: fail
+                statusCode: 4030
+                statusDescription: Error when updating the user information
+  /v1/users/organizations/{organizationId}:
+    get:
+      summary: Obtain a list of users by organization
+      tags:
+        - Users
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 7fc1623161119d4ec9aee036
+      responses:
+        '200':
+          description: Successfully obtained the list of users by organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/ResponseStatus'
+                  data:
+                    type: object
+                    properties:
+                      OrganizationUsers:
+                        $ref: '#/components/schemas/UsersWithId'
+
+        '500':
+          description: Error when obtaining the list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: fail
+                statusCode: 4001
+                statusDescription: Error when obtaining the list of users by Organization
+
+
+components:
+  schemas:
+    ResponseStatus:
+      type: string
+      enum:
+        - success
+        - fail
+        - error
+    ErrorResponseStatus:
+      type: string
+      enum:
+        - fail
+        - error
+    ResponseStatusCode:
+      type: number
+      example: 1023
+    ResponseStatusDescription:
+      type: string
+      example: The plan does not exist within the system
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ErrorResponseStatus'
+        statusCode:
+          $ref: '#/components/schemas/ResponseStatusCode'
+        statusDescription:
+          $ref: '#/components/schemas/ResponseStatusDescription'
+    Address:
+      type: object
+      properties:
+        streetName:
+          type: string
+          example: Astra House
+        streetNumber:
+          type: string
+          example: 201
+        city:
+          type: string
+          example: New Cross
+        postCode:
+          type: string
+          example: SE14 24
+        state:
+          type: string
+          example: London
+        country:
+          type: string
+          example: United Kingdom
+    User:
+      type: object
+      properties:
+        lastName:
+          type: string
+          description: User last name
+          example: John
+        firstName:
+          type: string
+          description: User first name
+          example: Doe
+        address:
+          $ref: '#/components/schemas/Address'
+        email:
+          type: string
+          description: user email address
+          format: email
+          example: my-email@gmail.com
+        phoneNumber:
+          type: string
+          description: User phone number
+          example: 00447307568957
+        mobileNumber:
+          type: string
+          description: User mobile number
+          example: 00447307568957
+        language:
+          type: string
+          description: User language
+          example: en
+        organizationId:
+          type: string
+          description: organizationId
+          example: 5e4be2fba63699941117e084
+    UserWithId:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: The user identifier
+              format: uuid
+              example: 5e4be2fba63699941117e084
+    Users:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+    UsersWithId:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserWithId'
